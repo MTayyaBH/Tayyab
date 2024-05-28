@@ -21,7 +21,8 @@ const signupdata = new mongoose.Schema({
     email: { type: String, unique: true },
     password: String,
     shopname: String,
-    accountid: String
+    accountid: String,
+    Type:String
 });
 const admindata = new mongoose.Schema({
     userName: String,
@@ -60,7 +61,12 @@ const mainSchema = new mongoose.Schema({
     3: String,
     4: String
 });
-
+const forgotpassword= new mongoose.Schema({
+    Fruit:String,
+    Vegetable:String,
+    Colour:String,
+    email: { type: String, unique: true }
+})
 const saveorder = new mongoose.Schema({
     0: [{
         shopname: String,
@@ -105,6 +111,7 @@ const TableData = mongoose.model('TableData', tableData);
 const OrderCard = mongoose.model('UserOrder', mainSchema)
 const saveorderadmin = mongoose.model('SaveOrder', saveorder)
 const image=mongoose.model('userimg' , userimage)
+const forgotpasswordmodal=mongoose.model('forgotpassword' , forgotpassword)
 mysever.get('/', (req, res) => {
     res.send('Welcome to our app!');
 });
@@ -171,7 +178,12 @@ mysever.listen(port, () => {
 
 
 mysever.post('/Signupdata', async (req, res) => {
-    const user = new Signupdata(req.body);
+    const signupdata = req.body;
+    const newsignupdata = {
+        ...signupdata,
+        Type: 'unbann'  
+    };
+    const user = new Signupdata(newsignupdata);
     await user.save();
     res.json(user);
 });
@@ -240,6 +252,27 @@ mysever.put('/changepassword/:id', async (req, res) => {
     try {
         const updatedUser = await Signupdata.findByIdAndUpdate(
             id, { $set: { password: status } },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.json(updatedUser);
+    } catch (error) {
+        console.error('Error updating user:', error);
+        if (error.kind === 'ObjectId' || error.name === 'CastError') {
+            return res.status(400).json({ message: 'Invalid user ID' });
+        }
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+mysever.put('/accountapple/:id', async (req, res) => {
+    let id =req.params.id;
+    let status=req.body.status;
+    try {
+        const updatedUser = await Signupdata.findByIdAndUpdate(
+            id, { $set: { Type: status } },
             { new: true, runValidators: true }
         );
 
@@ -534,6 +567,41 @@ mysever.get('/profile', async (req, res) => {
 mysever.put('/profile/:id', async (req, res) => {
     try {
         const updatedUser = await image.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.json(updatedUser);
+    } catch (error) {
+        console.error('Error updating user:', error);
+        if (error.kind === 'ObjectId' || error.name === 'CastError') {
+            return res.status(400).json({ message: 'Invalid user ID' });
+        }
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// forgotpassword
+mysever.post('/forgotpassword', async (req, res) => {
+    const user = new forgotpasswordmodal(req.body);
+    await user.save();
+    res.json(user);
+});
+mysever.get('/forgotpassword', async (req, res) => {
+    try {
+        const dataforgot = await forgotpasswordmodal.find();
+        res.json(dataforgot);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+})
+mysever.put('/forgotpassword/:id', async (req, res) => {
+    try {
+        const updatedUser = await forgotpasswordmodal.findByIdAndUpdate(
             req.params.id,
             req.body,
             { new: true, runValidators: true }
