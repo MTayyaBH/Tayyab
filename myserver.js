@@ -3,12 +3,21 @@ const express = require('express');
 const mysever = express();
 const cors = require('cors');
 mysever.use(cors());
-mysever.use(cors({
-    origin: 'http://localhost:4200',
+const allowedOrigins = ['http://localhost:4200', 'https://shop-world.surge.sh'];
+
+const corsOptions = {
+    origin: function (origin, callback) {
+        if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     methods: ['GET', 'POST', 'DELETE', 'UPDATE', 'PUT', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
-}));
+};
+mysever.use(cors(corsOptions));
 mysever.use(express.json());
 const mongoose = require('mongoose');
 mongoose.connect('mongodb://localhost/newbg');
